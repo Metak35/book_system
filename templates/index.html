@@ -1,0 +1,193 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Система учёта книг</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f5f6fa;
+        }
+        h1 { color: #243b53; }
+        input, button {
+            padding: 10px;
+            margin: 5px 5px 15px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th { background: #e7edf5; }
+    </style>
+</head>
+<body>
+    <h1>Система учёта книг</h1>
+
+    <h2>Добавить новую книгу</h2>
+
+<form action="/add" method="POST">
+    <input type="text" name="title"
+           placeholder="Название книги" required>
+
+    <input type="text" name="author"
+           placeholder="Автор" required>
+
+    <input type="text" name="inventory_number"
+           placeholder="Инвентарный номер" required>
+
+    <button type="submit">Добавить книгу</button>
+</form>
+
+<hr>
+
+    <h2>Каталог книг</h2>
+
+    <form method="GET" action="/">
+        <input type="text" name="search"
+               placeholder="Введите название книги"
+               value="{{ search }}">
+        <button type="submit">Найти книгу</button>
+        <a href="/">Показать все книги</a>
+    </form>
+
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Название</th>
+            <th>Автор</th>
+            <th>Инвентарный номер</th>
+            <th>Доступность</th>
+        </tr>
+        {% for book in books %}
+        <tr>
+            <td>{{ book[0] }}</td>
+            <td>{{ book[1] }}</td>
+            <td>{{ book[2] }}</td>
+            <td>{{ book[3] }}</td>
+            <td>
+                {{ "Доступна" if book[4] else "Выдана" }}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    {% if not books %}
+        <p>Книги не найдены.</p>
+    {% endif %}
+    
+<hr>
+
+<form action="/add_reader" method="POST">
+    <input type="text" name="name"
+           placeholder="Имя читателя" required>
+    <button type="submit">Добавить читателя</button>
+</form>
+
+<h2>Список читателей</h2>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Имя читателя</th>
+    </tr>
+
+    {% for reader in readers %}
+    <tr>
+        <td>{{ reader[0] }}</td>
+        <td>{{ reader[1] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% if not readers %}
+    <p>Читатели не найдены.</p>
+{% endif %}
+
+<hr>
+
+<h2>Выдача книги читателю</h2>
+
+<form action="/loans/add" method="POST">
+
+    <label>Выберите книгу:</label>
+    <select name="book_id" required>
+        <option value="">Выберите книгу</option>
+        {% for book in books %}
+            {% if book[4] %}
+                <option value="{{ book[0] }}">
+                    {{ book[1] }} — {{ book[2] }}
+                </option>
+            {% endif %}
+        {% endfor %}
+    </select>
+
+    <label>Выберите читателя:</label>
+    <select name="reader_id" required>
+        <option value="">Выберите читателя</option>
+        {% for reader in readers %}
+            <option value="{{ reader[0] }}">
+                {{ reader[1] }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <button type="submit">Выдать книгу</button>
+
+</form>
+
+<hr>
+
+<h2>История выдачи книг</h2>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Название книги</th>
+        <th>Читатель</th>
+        <th>Дата выдачи</th>
+        <th>Дата возврата</th>
+        <th>Действие</th>
+    </tr>
+
+    {% for loan in loans %}
+    <tr>
+        <td>{{ loan[0] }}</td>
+        <td>{{ loan[1] }}</td>
+        <td>{{ loan[2] }}</td>
+        <td>{{ loan[3] }}</td>
+        <td>
+            {% if loan[4] %}
+                {{ loan[4] }}
+            {% else %}
+                Не возвращена
+            {% endif %}
+            
+<td>
+    {% if loan[4] is none %}
+        <form action="{{ url_for('return_book', loan_id=loan[0]) }}" method="POST">
+            <button type="submit">Вернуть книгу</button>
+        </form>
+    {% else %}
+        Возвращена
+    {% endif %}
+</td>
+
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% if not loans %}
+    <p>История выдачи пока пуста.</p>
+{% endif %}
+
+</body>
+</html>
